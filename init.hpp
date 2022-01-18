@@ -162,7 +162,6 @@ QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device)
     if(indices.graphicsFamily.has_value()) break; // If the graphicsFamily is real (existing), then stop.
     i++;
   }
-
   return indices;
 }
 
@@ -191,6 +190,8 @@ int createPhysicalDevice()
   if(deviceCount == 0) throw std::runtime_error("Failed to find any GPU with Vulkan support!");
 
   std::vector<VkPhysicalDevice> devices(deviceCount);
+
+  CHECK_VULKAN_ERRORS( vkEnumeratePhysicalDevices(g_instance, &deviceCount, devices.data()) );
 
   for(const auto& device : devices) // For all the devices check which one(s) meet the requirements
   {

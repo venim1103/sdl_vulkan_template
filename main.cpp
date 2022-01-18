@@ -21,7 +21,7 @@ int main()
 
   if(createSurface(g_window) == EXIT_FAILURE) return EXIT_FAILURE;
 
-//  createPhysicalDevice(); TODO FIX CRASHING!
+  createPhysicalDevice(); // TODO FIX CRASHING!
 
   // Loop
   while(!g_quitFlag)
