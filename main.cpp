@@ -11,6 +11,13 @@ int main()
 {
   if(createWindow("Vulkan", 1280, 720) == EXIT_FAILURE) return EXIT_FAILURE;
 
+#ifdef NDEBUG // Not debug : Disable validation for better performance and size
+  createInstance("Triangle", {1,0,0}, "Template_Engine", {1,0,0}, false);
+#else // Debug : Enable validation
+  createInstance("Triangle", {1,0,0}, "Template_Engine", {1,0,0}, true);
+#endif
+
+
   while(!g_quitFlag)
   {
     pollEvents();

@@ -12,8 +12,8 @@ Inside the working folder:
 ## Windows: 
 - Install SDL2 for Mingw: [https://www.libsdl.org/index.php](https://www.libsdl.org/index.php) into your desired $(MINGWSDL2) folder and update Makefile accordingly
 - Install vulkan-sdk: [https://vulkan.lunarg.com/](https://vulkan.lunarg.com/) into your desired $(VULKAN_SDK_PATH_WINDOWS) folder and update Makefile accordingly
-### Inside MSYS2 (MinGW x64: 
-Install msys2 + sdl2 + mingw-w64-x86_64-vulkan-headers into your desired $(MSYS2_INSTALLATION_PATH): [https://gist.github.com/thales17/fb2e4cff60890a51d9dddd4c6e832ad2](https://gist.github.com/thales17/fb2e4cff60890a51d9dddd4c6e832ad2)
+- Install msys2 [https://www.msys2.org/](https://www.msys2.org/) + sdl2 + mingw-w64-x86_64-vulkan-headers into your desired $(MSYS2_INSTALLATION_PATH): [https://gist.github.com/thales17/fb2e4cff60890a51d9dddd4c6e832ad2](https://gist.github.com/thales17/fb2e4cff60890a51d9dddd4c6e832ad2)
+### Inside MSYS2 (MinGW x64): 
 - pacman -Syu
 - pacman -S git mingw-w64-x86_64-toolchain mingw64/mingw-w64-x86_64-SDL2 mingw64/mingw-w64-x86_64-SDL2_mixer mingw64/mingw-w64-x86_64-SDL2_image mingw64/mingw-w64-x86_64-SDL2_ttf mingw64/mingw-w64-x86_64-SDL2_net make mingw-w64-x86_64-vulkan-headers
 - cp $(MSYS2_INSTALLATION_PATH)/mingw64/bin/libgcc_s_seh-1.dll BUILD/WIN/
