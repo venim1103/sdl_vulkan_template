@@ -19,6 +19,10 @@ int main()
 #endif
   setupDebugMessenger();
 
+  if(createSurface(g_window) == EXIT_FAILURE) return EXIT_FAILURE;
+
+//  createPhysicalDevice(); TODO FIX CRASHING!
+
   // Loop
   while(!g_quitFlag)
   {
@@ -26,8 +30,15 @@ int main()
   }
 
   // Delete
-  if(g_enabledValidationLayers) destroyDebugUtilsMessengerEXT(g_instance, g_debugMessenger, nullptr); // extensions must be destroyed before instance destruction!
+  if(g_enabledValidationLayers) destroyDebugUtilsMessengerEXT(g_instance, g_debugMessenger, nullptr); // extensions must be destroyed before instance destruction
+  g_debugMessenger = VK_NULL_HANDLE;
+
+  vkDestroySurfaceKHR(g_instance, g_surface, nullptr);
+  g_surface = VK_NULL_HANDLE;
+
   vkDestroyInstance(g_instance, nullptr);
+  g_instance = VK_NULL_HANDLE;
+
   destroyWindow();
 
   return EXIT_SUCCESS;

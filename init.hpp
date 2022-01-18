@@ -1,4 +1,5 @@
 #pragma once
+#include "common.hpp"
 
 const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"}; // Validation layers enabled
 
@@ -123,21 +124,84 @@ void createInstance(std::string app_name, std::vector<uint8_t> app_version, std:
   createInfo.ppEnabledExtensionNames = extensions.data();
 
   // Create the debug messenger
-//  VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = { VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT };
-  VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = {};
+  VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = {}; // Initialize here
   createDebugMessenger( createInfo, debugCreateInfo );
 
   CHECK_VULKAN_ERRORS( vkCreateInstance(&createInfo, nullptr, &g_instance) );
 }
 
-int createSurface()
+int createSurface(SDL_Window* window)
 {
-
+  if(!SDL_Vulkan_CreateSurface(window, g_instance, &g_surface))
+  {
+    std::cerr << "SDL Error: " << SDL_GetError() << std::endl;
+    return EXIT_FAILURE;
+  }
   return EXIT_SUCCESS;
+}
+
+struct QueueFamilyIndices
+{
+  std::optional<uint32_t> graphicsFamily; // Making the graphicsFamily's existence testable.
+};
+
+QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device)
+{
+  QueueFamilyIndices indices;
+
+  uint32_t queueFamilyCount = 0;
+  vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr); // Count the families
+
+  std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+  vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data()); // Get the valus into vector.
+ 
+  int i = 0;
+  for(const auto& queueFamily : queueFamilies)
+  {
+    if(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) indices.graphicsFamily = i; // Found "graphics" bit, save index.
+    if(indices.graphicsFamily.has_value()) break; // If the graphicsFamily is real (existing), then stop.
+    i++;
+  }
+
+  return indices;
+}
+
+static bool deviceIsSuitable(VkPhysicalDevice device)
+{
+  // ADD HERE OTHER REQUIREMENTS FUNCTIONS FOR CHOOSING THE GPU, NOW ONLY QUEUE FAMILIES WILL BE CHECKED:
+//   VkPhysicalDeviceProperties deviceProperties;
+//   VkPhysicalDeviceFeatures deviceFeatures;
+//   vkGetPhysicalDeviceProperties(device, &deviceProperties);
+//   vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+//   if(deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader) // EXAMPLE!
+  //...
+
+// Queue families are separate queues (command queues) for different tasks: "compute command", "memory transfer", "graphics"... 
+  // We need to find a queue family for "graphics" tasks at least (and that our SDL surface is supported:
+  
+  QueueFamilyIndices indices = findQueueFamilies(device);
+
+  return indices.graphicsFamily.has_value(); // Return true if the graphicsFamily is real (exists).
 }
 
 int createPhysicalDevice()
 {
+  uint32_t deviceCount = 0;
+  CHECK_VULKAN_ERRORS( vkEnumeratePhysicalDevices(g_instance, &deviceCount, nullptr) );
+  if(deviceCount == 0) throw std::runtime_error("Failed to find any GPU with Vulkan support!");
+
+  std::vector<VkPhysicalDevice> devices(deviceCount);
+
+  for(const auto& device : devices) // For all the devices check which one(s) meet the requirements
+  {
+    if(deviceIsSuitable(device))
+    {
+      g_physicalDevice = device;
+      break;
+    }
+  }
+
+  if(g_physicalDevice == VK_NULL_HANDLE) throw std::runtime_error("Failed to find a suitable GPU!");
 
   return EXIT_SUCCESS;
 }

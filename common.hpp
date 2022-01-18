@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <cassert>
+#include <optional>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
@@ -18,6 +19,8 @@ bool g_enabledValidationLayers = false;
 
 VkInstance g_instance;
 VkDebugUtilsMessengerEXT g_debugMessenger;
+VkSurfaceKHR g_surface;
+VkPhysicalDevice g_physicalDevice = VK_NULL_HANDLE;
 
 #define CHECK_VULKAN_ERRORS(Expression) do { VkResult result = (Expression); if(result < 0) assert(0); } while(0)
 

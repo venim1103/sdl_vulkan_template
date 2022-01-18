@@ -1,7 +1,7 @@
 #pragma once
 #include "common.hpp"
 
-SDL_Window* window;
+SDL_Window* g_window;
 
 int createWindow(std::string window_name, uint32_t width, uint32_t height)
 {
@@ -15,8 +15,8 @@ int createWindow(std::string window_name, uint32_t width, uint32_t height)
     return EXIT_FAILURE;
   }
 
-  window = SDL_CreateWindow(window_name.c_str(), centered, centered, width, height, window_setting_flags);
-  if(!window)
+  g_window = SDL_CreateWindow(window_name.c_str(), centered, centered, width, height, window_setting_flags);
+  if(!g_window)
   {
     std::cerr << "SDL Error: " << SDL_GetError() << std::endl;
     SDL_Quit();
@@ -71,7 +71,7 @@ void pollEvents()
 
 int destroyWindow()
 {
-  SDL_DestroyWindow(window);
+  SDL_DestroyWindow(g_window);
   SDL_Quit();
   return EXIT_SUCCESS;
 }
