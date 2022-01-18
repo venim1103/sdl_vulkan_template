@@ -1,7 +1,8 @@
 #pragma once
 
 #ifdef __APPLE__
-const std::vector<const char *> validationLayers = {"VK_LAYER_LUNARG_standard_validation"}; // Validation layers enabled
+//const std::vector<const char *> validationLayers = {"VK_LAYER_LUNARG_standard_validation"}; // Validation layers enabled
+const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"}; // Validation layers enabled
 #else
 const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"}; // Validation layers enabled
 #endif
@@ -11,7 +12,6 @@ static bool validationLayersSupported()
   uint32_t layerCount, layersFound = 0;
 
   CHECK_VULKAN_ERRORS( vkEnumerateInstanceLayerProperties(&layerCount, nullptr) ); // Check how many layers can exist
-//  std::cout << "layerCount: " << int(layerCount) << std::endl;
   
   std::vector<VkLayerProperties> availableLayers(layerCount); // Make a vector of available layers
   CHECK_VULKAN_ERRORS( vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data()) ); // Fill up available layer data
@@ -44,6 +44,12 @@ static VkResult createDebugUtilsMessengerEXT(VkInstance instance, const VkDebugU
   return VK_ERROR_EXTENSION_NOT_PRESENT; // else
 }
 
+void destroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) 
+{
+  auto function = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+  if(function != nullptr) return function(instance, debugMessenger, pAllocator);
+}
+
 static void createDebugMessenger(VkInstanceCreateInfo& createInfo)
 {
   VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = {};
@@ -56,8 +62,9 @@ static void createDebugMessenger(VkInstanceCreateInfo& createInfo)
     debugCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT; 
     debugCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     debugCreateInfo.pfnUserCallback = debugCallback; // Set CALLBACK error function!
-    debugCreateInfo.pUserData == nullptr; // Optional, no needed
+    debugCreateInfo.pUserData = nullptr; // Optional, no needed
 
+//    createInfo.pNext = nullptr;
     createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
     CHECK_VULKAN_ERRORS( createDebugUtilsMessengerEXT(g_instance, &debugCreateInfo, nullptr, &g_debugMessenger) );
 
@@ -89,13 +96,13 @@ void createInstance(std::string app_name, std::vector<uint8_t> app_version, std:
   VkInstanceCreateInfo createInfo = { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO }; // Create the application instance
   createInfo.pApplicationInfo = &appInfo;
   
-  // Prepare debug utilities
+  // Prepare extensions
   std::vector<const char*> extensions = { VK_KHR_SURFACE_EXTENSION_NAME };
 #ifdef _WIN32
   extensions.push_back( VK_KHR_WIN32_SURFACE_EXTENSION_NAME );
 #elif defined(__APPLE__)
   extensions.push_back( VK_MVK_MACOS_SURFACE_EXTENSION_NAME );
-  extensions.push_back( "VK_KHR_get_physical_device_properties2" ); // TODO: Make correct checking
+//  extensions.push_back( "VK_KHR_get_physical_device_properties2" ); // TODO: Make correct checking
 #elif defined(__linux__)
   extensions.push_back( VK_KHR_XLIB_SURFACE_EXTENSION_NAME );
 #endif
@@ -104,10 +111,10 @@ void createInstance(std::string app_name, std::vector<uint8_t> app_version, std:
   createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
   createInfo.ppEnabledExtensionNames = extensions.data();
 
-  // Create the debug messenger
-//  createDebugMessenger( createInfo );
-  // ... instInfo
   CHECK_VULKAN_ERRORS( vkCreateInstance(&createInfo, nullptr, &g_instance) );
+
+  // Create the debug messenger
+  createDebugMessenger( createInfo );
 }
 
 int createSurface()

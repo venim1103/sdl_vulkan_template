@@ -17,12 +17,14 @@ int main()
   createInstance("Triangle", {1,0,0}, "Template_Engine", {1,0,0}, true);
 #endif
 
-
   while(!g_quitFlag)
   {
     pollEvents();
   }
 
+  // Delete
+  if(g_enabledValidationLayers) destroyDebugUtilsMessengerEXT(g_instance, g_debugMessenger, nullptr);
+  vkDestroyInstance(g_instance, nullptr);
   destroyWindow();
 
   return EXIT_SUCCESS;
