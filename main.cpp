@@ -9,6 +9,7 @@ int wmain()
 int main()
 #endif
 {
+  // Create
   if(createWindow("Vulkan", 1280, 720) == EXIT_FAILURE) return EXIT_FAILURE;
 
 #ifdef NDEBUG // Not debug : Disable validation for better performance and size
@@ -16,14 +17,16 @@ int main()
 #else // Debug : Enable validation
   createInstance("Triangle", {1,0,0}, "Template_Engine", {1,0,0}, true);
 #endif
+  setupDebugMessenger();
 
+  // Loop
   while(!g_quitFlag)
   {
     pollEvents();
   }
 
   // Delete
-  if(g_enabledValidationLayers) destroyDebugUtilsMessengerEXT(g_instance, g_debugMessenger, nullptr);
+  if(g_enabledValidationLayers) destroyDebugUtilsMessengerEXT(g_instance, g_debugMessenger, nullptr); // extensions must be destroyed before instance destruction!
   vkDestroyInstance(g_instance, nullptr);
   destroyWindow();
 
