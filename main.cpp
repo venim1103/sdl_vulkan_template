@@ -36,10 +36,17 @@ int main()
   vkDestroySurfaceKHR(g_instance, g_surface, nullptr);
   g_surface = VK_NULL_HANDLE;
 
+  vkDestroyDevice(g_device, nullptr);
+  g_device = VK_NULL_HANDLE;
+
   vkDestroyInstance(g_instance, nullptr);
   g_instance = VK_NULL_HANDLE;
+
+  g_graphicsQueue = VK_NULL_HANDLE;
+  g_physicalDevice = VK_NULL_HANDLE;
 
   destroyWindow();
 
   return EXIT_SUCCESS;
 }
+

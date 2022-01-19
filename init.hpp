@@ -29,7 +29,8 @@ static bool validationLayersSupported()
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 {
-  std::cerr << "Validation layer: " << pCallbackData->pMessage << std::endl;
+//  std::cerr << "Validation layer: " << pCallbackData->pMessage << std::endl;
+  std::cerr << pCallbackData->pMessage << std::endl;
   return VK_FALSE;
 }
 
@@ -204,11 +205,42 @@ int createPhysicalDevice()
 
   if(g_physicalDevice == VK_NULL_HANDLE) throw std::runtime_error("Failed to find a suitable GPU!");
 
+  vkGetPhysicalDeviceProperties(g_physicalDevice, &g_properties);
+  std::cout << "Physical device: " << g_properties.deviceName << std::endl;
+
   return EXIT_SUCCESS;
 }
 
 int createLogicalDevice()
 {
+  QueueFamilyIndices indices = findQueueFamilies(g_physicalDevice); // Collect the quefamilies from the selected device(s)
+ 
+  // For now create one queue
+  float queuePriority = 1.0f; // Highest priority for only one queue
+  VkDeviceQueueCreateInfo queueCreateInfo = { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO }; 
+  queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
+  queueCreateInfo.queueCount = 1; // Now only one (in general, not many needed as threading is supported)
+  queueCreateInfo.pQueuePriorities = &queuePriority;
+  
+  VkPhysicalDeviceFeatures deviceFeatures = {}; // Disable all feature for now
+  
+  VkDeviceCreateInfo createInfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
+  createInfo.pQueueCreateInfos = &queueCreateInfo;
+  createInfo.queueCreateInfoCount = 1; // One for now
+  createInfo.pEnabledFeatures = &deviceFeatures;
+
+  // Below no longer needed, included for legacy support: (Instance and device validation layers no need to separate anymore)  
+  createInfo.enabledExtensionCount = 0;
+  if(g_enabledValidationLayers) 
+  {
+    createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+    createInfo.ppEnabledLayerNames = validationLayers.data();
+  } else createInfo.enabledLayerCount = 0;
+
+  CHECK_VULKAN_ERRORS( vkCreateDevice(g_physicalDevice, &createInfo, nullptr, &g_device ) );
+
+  // Queues are automatically created when logical devices are created, thus we just need to connect a handle:
+  vkGetDeviceQueue(g_device, indices.graphicsFamily.value(), 0, &g_graphicsQueue);
 
   return EXIT_SUCCESS;
 }

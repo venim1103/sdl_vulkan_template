@@ -17,10 +17,14 @@ uint32_t g_height = 1;
 bool g_quitFlag = false;
 bool g_enabledValidationLayers = false;
 
-VkInstance g_instance;
-VkDebugUtilsMessengerEXT g_debugMessenger;
-VkSurfaceKHR g_surface;
+VkInstance g_instance = VK_NULL_HANDLE;
+VkDebugUtilsMessengerEXT g_debugMessenger = VK_NULL_HANDLE;
+VkSurfaceKHR g_surface = VK_NULL_HANDLE;
 VkPhysicalDevice g_physicalDevice = VK_NULL_HANDLE;
+VkDevice g_device = VK_NULL_HANDLE;
+VkQueue g_graphicsQueue = VK_NULL_HANDLE;
+
+VkPhysicalDeviceProperties g_properties;
 
 #define CHECK_VULKAN_ERRORS(Expression) do { VkResult result = (Expression); if(result < 0) assert(0); } while(0)
 

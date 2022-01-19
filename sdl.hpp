@@ -5,7 +5,8 @@ SDL_Window* g_window;
 
 int createWindow(std::string window_name, uint32_t width, uint32_t height)
 {
-  const uint32_t window_setting_flags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN;
+//  const uint32_t window_setting_flags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN;
+  const uint32_t window_setting_flags = SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN;
   const uint32_t centered = SDL_WINDOWPOS_CENTERED;
 
   SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
@@ -58,7 +59,7 @@ void pollEvents()
         g_quitFlag = true;
         break;
       case SDL_EventType::SDL_WINDOWEVENT:
-        handlePossibleResizeEvent(event);
+//        handlePossibleResizeEvent(event);
         break;
       case SDL_EventType::SDL_KEYDOWN:
         handleKeyDown(event.key);
