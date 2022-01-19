@@ -23,6 +23,7 @@ VkSurfaceKHR g_surface = VK_NULL_HANDLE;
 VkPhysicalDevice g_physicalDevice = VK_NULL_HANDLE;
 VkDevice g_device = VK_NULL_HANDLE;
 VkQueue g_graphicsQueue = VK_NULL_HANDLE;
+VkCommandPool g_commandPool = VK_NULL_HANDLE;
 
 VkPhysicalDeviceProperties g_properties;
 

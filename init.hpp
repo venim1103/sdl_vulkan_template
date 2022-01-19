@@ -214,7 +214,7 @@ int createPhysicalDevice()
 int createLogicalDevice()
 {
   QueueFamilyIndices indices = findQueueFamilies(g_physicalDevice); // Collect the quefamilies from the selected device(s)
- 
+
   // For now create one queue
   float queuePriority = 1.0f; // Highest priority for only one queue
   VkDeviceQueueCreateInfo queueCreateInfo = { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO }; 
@@ -247,6 +247,15 @@ int createLogicalDevice()
 
 int createCommandPool()
 {
+  QueueFamilyIndices indices = findQueueFamilies(g_physicalDevice);
+  VkCommandPoolCreateInfo commandPoolCreateInfo = { VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
+  commandPoolCreateInfo.queueFamilyIndex = indices.graphicsFamily.value(); // Command pool connects buffers (memory) to only graphics related queues.
+  // Transient: Command buffers rerecorded "often", Reset: Allow command buffers to be rerecorded "individually".
+//  commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+  commandPoolCreateInfo.pNext = NULL;
+  commandPoolCreateInfo.flags = 0;
+
+  CHECK_VULKAN_ERRORS( vkCreateCommandPool(g_device, &commandPoolCreateInfo, nullptr, &g_commandPool) );
 
   return EXIT_SUCCESS;
 }
