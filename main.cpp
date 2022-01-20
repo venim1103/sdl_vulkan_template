@@ -1,6 +1,7 @@
 #include "common.hpp"
-#include "init.hpp"
 #include "sdl.hpp"
+#include "init.hpp"
+#include "swap.hpp"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -23,7 +24,9 @@ int main()
 
   createPhysicalDevice();
 
-//  createCommandPool(); // FIX CRASHING
+  createLogicalDevice();
+
+  createCommandPool();
 
   // Loop
   while(!g_quitFlag)
@@ -32,7 +35,7 @@ int main()
   }
 
   // Delete
-//  vkDestroyCommandPool(g_device, g_commandPool, nullptr); // FIX CRASHING
+  vkDestroyCommandPool(g_device, g_commandPool, nullptr);
   g_commandPool = VK_NULL_HANDLE;
 
   if(g_enabledValidationLayers) destroyDebugUtilsMessengerEXT(g_instance, g_debugMessenger, nullptr); // extensions must be destroyed before instance destruction
@@ -48,6 +51,7 @@ int main()
   g_instance = VK_NULL_HANDLE;
 
   g_graphicsQueue = VK_NULL_HANDLE;
+  g_presentQueue = VK_NULL_HANDLE;
   g_physicalDevice = VK_NULL_HANDLE;
 
   destroyWindow();

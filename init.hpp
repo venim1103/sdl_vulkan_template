@@ -2,6 +2,18 @@
 #include "common.hpp"
 
 const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"}; // Validation layers enabled
+#ifdef __APPLE__
+const std::vector<const char *> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME };
+#else
+const std::vector<const char *> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+#endif
+
+struct QueueFamilyIndices
+{
+  std::optional<uint32_t> graphicsFamily; // Making the graphicsFamily's existence testable.
+  std::optional<uint32_t> presentFamily; // Present family may not be in the same as graphics, so need to be checked separately
+};
+
 
 static bool validationLayersSupported()
 {
@@ -53,7 +65,7 @@ static void settingsForDebugMessenger(VkDebugUtilsMessengerCreateInfoEXT& debugC
 {
   debugCreateInfo = {}; 
   debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-  debugCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT; // Diagnostic messages, warnings for bugs and error information for crashes
+  debugCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT; // (| VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) Diagnostic messages, warnings for bugs and error information for crashes
   debugCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT; // Enable specification and performance check related messages
   debugCreateInfo.pfnUserCallback = debugCallback; // Set CALLBACK error function!
   debugCreateInfo.pUserData = nullptr; // Optional, not needed right now (pointer can be pointed to specific data/class/structure etc. for testing)
@@ -115,7 +127,7 @@ void createInstance(std::string app_name, std::vector<uint8_t> app_version, std:
   extensions.push_back( VK_KHR_WIN32_SURFACE_EXTENSION_NAME );
 #elif defined(__APPLE__)
   extensions.push_back( VK_MVK_MACOS_SURFACE_EXTENSION_NAME );
-  // extensions.push_back( "VK_KHR_get_physical_device_properties2" ); // TODO: Make correct checking
+  extensions.push_back( VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME ); // TODO: Make correct checking
 #elif defined(__linux__)
   extensions.push_back( VK_KHR_XLIB_SURFACE_EXTENSION_NAME );
 #endif
@@ -141,11 +153,6 @@ int createSurface(SDL_Window* window)
   return EXIT_SUCCESS;
 }
 
-struct QueueFamilyIndices
-{
-  std::optional<uint32_t> graphicsFamily; // Making the graphicsFamily's existence testable.
-};
-
 QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device)
 {
   QueueFamilyIndices indices;
@@ -157,13 +164,36 @@ QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device)
   vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data()); // Get the valus into vector.
  
   int i = 0;
+  VkBool32 presentSupport = false;
   for(const auto& queueFamily : queueFamilies)
   {
     if(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) indices.graphicsFamily = i; // Found "graphics" bit, save index.
-    if(indices.graphicsFamily.has_value()) break; // If the graphicsFamily is real (existing), then stop.
+
+    vkGetPhysicalDeviceSurfaceSupportKHR(device, i, g_surface, &presentSupport); // Check of present  supported in the queue.
+    if(presentSupport) indices.presentFamily = i; // If supported, then save the index
+
+    if((indices.graphicsFamily.has_value() && indices.presentFamily.has_value())) break; // If the graphicsFamily is real (existing) and the presentFamily also, then stop.
     i++;
   }
   return indices;
+}
+
+static bool checkDeviceExtensionSupport(VkPhysicalDevice device)
+{
+  uint32_t extensionCount;
+  vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr); // Count the extensions found
+ 
+  std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+  vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data()); // Get extensions
+
+  std::set<std::string> requiredExtensionShoppingList(deviceExtensions.begin(), deviceExtensions.end());
+
+  for(const auto& extension : availableExtensions) // Go trough and remove found required extensions from list until all found.
+  {
+    requiredExtensionShoppingList.erase(extension.extensionName);
+  }
+
+  return requiredExtensionShoppingList.empty(); // If all required extensions found and crossed over (list empty).
 }
 
 static bool deviceIsSuitable(VkPhysicalDevice device)
@@ -180,8 +210,8 @@ static bool deviceIsSuitable(VkPhysicalDevice device)
   // We need to find a queue family for "graphics" tasks at least (and that our SDL surface is supported:
   
   QueueFamilyIndices indices = findQueueFamilies(device);
-
-  return indices.graphicsFamily.has_value(); // Return true if the graphicsFamily is real (exists).
+  g_deviceExtensionsSupported = checkDeviceExtensionSupport(device);
+  return (indices.graphicsFamily.has_value() && indices.presentFamily.has_value() && g_deviceExtensionsSupported && swapChainIsAdequate(device)); // Return true if the graphicsFamily is real (exists) and make sure device extensions are supported.
 }
 
 int createPhysicalDevice()
@@ -215,22 +245,31 @@ int createLogicalDevice()
 {
   QueueFamilyIndices indices = findQueueFamilies(g_physicalDevice); // Collect the quefamilies from the selected device(s)
 
-  // For now create one queue
+  // Create graphics and present queues:
   float queuePriority = 1.0f; // Highest priority for only one queue
-  VkDeviceQueueCreateInfo queueCreateInfo = { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO }; 
-  queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
-  queueCreateInfo.queueCount = 1; // Now only one (in general, not many needed as threading is supported)
-  queueCreateInfo.pQueuePriorities = &queuePriority;
+
+  std::vector<VkDeviceQueueCreateInfo> queueCreateInfos; // Two queue create infos
+  std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() }; // set of indeces
+  for(const auto& queueFamily : uniqueQueueFamilies)
+  {
+    VkDeviceQueueCreateInfo queueCreateInfo = { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO }; 
+    queueCreateInfo.queueFamilyIndex = queueFamily;
+    queueCreateInfo.queueCount = 1; // Now only one (in general, not many needed as threading is supported)
+    queueCreateInfo.pQueuePriorities = &queuePriority;
+    queueCreateInfos.push_back(queueCreateInfo); // Save unique queue into the vector
+  }
   
   VkPhysicalDeviceFeatures deviceFeatures = {}; // Disable all feature for now
   
   VkDeviceCreateInfo createInfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
-  createInfo.pQueueCreateInfos = &queueCreateInfo;
-  createInfo.queueCreateInfoCount = 1; // One for now
+  createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size()); // Graphics and present queues
+  createInfo.pQueueCreateInfos = queueCreateInfos.data();
   createInfo.pEnabledFeatures = &deviceFeatures;
 
-  // Below no longer needed, included for legacy support: (Instance and device validation layers no need to separate anymore)  
-  createInfo.enabledExtensionCount = 0;
+  createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
+  createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+
+  // Below may not needed, included for legacy support: (Instance and device validation layers no need to separate anymore)  
   if(g_enabledValidationLayers) 
   {
     createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
@@ -239,8 +278,9 @@ int createLogicalDevice()
 
   CHECK_VULKAN_ERRORS( vkCreateDevice(g_physicalDevice, &createInfo, nullptr, &g_device ) );
 
-  // Queues are automatically created when logical devices are created, thus we just need to connect a handle:
-  vkGetDeviceQueue(g_device, indices.graphicsFamily.value(), 0, &g_graphicsQueue);
+  // Queues are automatically created when logical devices are created, thus we just need to connect the handles:
+  vkGetDeviceQueue(g_device, indices.graphicsFamily.value(), 0, &g_graphicsQueue); // These queue handles could point same place
+  vkGetDeviceQueue(g_device, indices.presentFamily.value(), 0, &g_presentQueue); // These queue handles could point same place
 
   return EXIT_SUCCESS;
 }
