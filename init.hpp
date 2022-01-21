@@ -8,13 +8,6 @@ const std::vector<const char *> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_
 const std::vector<const char *> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 #endif
 
-struct QueueFamilyIndices
-{
-  std::optional<uint32_t> graphicsFamily; // Making the graphicsFamily's existence testable.
-  std::optional<uint32_t> presentFamily; // Present family may not be in the same as graphics, so need to be checked separately
-};
-
-
 static bool validationLayersSupported()
 {
   uint32_t layerCount, layersFound = 0;

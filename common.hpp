@@ -28,9 +28,21 @@ VkQueue g_graphicsQueue = VK_NULL_HANDLE;
 VkQueue g_presentQueue = VK_NULL_HANDLE;
 VkCommandPool g_commandPool = VK_NULL_HANDLE;
 
+VkSwapchainKHR g_swapchain = VK_NULL_HANDLE;
+std::vector<VkImage> g_swapChainImages;
+VkFormat g_swapChainImageFormat;
+VkExtent2D g_swapChainExtent;
+
 VkPhysicalDeviceProperties g_properties;
+
+struct QueueFamilyIndices
+{
+  std::optional<uint32_t> graphicsFamily; // Making the graphicsFamily's existence testable.
+  std::optional<uint32_t> presentFamily; // Present family may not be in the same as graphics, so need to be checked separately
+};
 
 #define CHECK_VULKAN_ERRORS(Expression) do { VkResult result = (Expression); if(result < 0) assert(0); } while(0)
 
 extern bool swapChainIsAdequate(VkPhysicalDevice device);
+extern QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 

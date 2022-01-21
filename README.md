@@ -30,7 +30,12 @@ Inside the working folder:
 ### Inside command line
 Install development libraries:
 - brew update && brew upgrade && brew clean
-- brew install gcc g++ make sdl2 sdl2_mixer sd2l_image sdl2_ttf sdl2_net
+- brew install gcc g++ gdb make sdl2 sdl2_mixer sd2l_image sdl2_ttf sdl2_net
+# Installing GDB
+https://gist.github.com/mike-myers-tob/9a6013124bad7ff074d3297db2c98247
+- brew install --force --build-from-source domq/gdb/gdb
+- (Maybe needed according to "brew link --overwrite --dry-run gdb" command: - brew unlink arm-none-eabi-gcc && brew link --overwrite gdb)
+- Check the gdb-entitlement.xml and do: codesign --entitlements gdb-entitlement.xml -fs gdb-cert $(which gdb)
 
 ## Linux specific:
 - Install vulkan-sdk: [https://vulkan.lunarg.com/](https://vulkan.lunarg.com/) into your desired $(VULKAN_SDK_PATH_LINUX) folder and update Makefile accordingly

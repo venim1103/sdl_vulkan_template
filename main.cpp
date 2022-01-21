@@ -12,21 +12,17 @@ int main()
 {
   // Create
   if(createWindow("Vulkan", 1280, 720) == EXIT_FAILURE) return EXIT_FAILURE;
-
 #ifdef NDEBUG // Not debug : Disable validation for better performance and size
   createInstance("Triangle", {1,0,0}, "Template_Engine", {1,0,0}, false);
 #else // Debug : Enable validation
   createInstance("Triangle", {1,0,0}, "Template_Engine", {1,0,0}, true);
 #endif
   setupDebugMessenger();
-
   if(createSurface(g_window) == EXIT_FAILURE) return EXIT_FAILURE;
-
   createPhysicalDevice();
-
   createLogicalDevice();
-
   createCommandPool();
+  createSwapChain();
 
   // Loop
   while(!g_quitFlag)
@@ -40,6 +36,9 @@ int main()
 
   if(g_enabledValidationLayers) destroyDebugUtilsMessengerEXT(g_instance, g_debugMessenger, nullptr); // extensions must be destroyed before instance destruction
   g_debugMessenger = VK_NULL_HANDLE;
+
+  vkDestroySwapchainKHR(g_device, g_swapchain, nullptr);
+  g_swapchain = VK_NULL_HANDLE;
 
   vkDestroySurfaceKHR(g_instance, g_surface, nullptr);
   g_surface = VK_NULL_HANDLE;

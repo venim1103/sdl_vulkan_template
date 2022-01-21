@@ -76,3 +76,4 @@ int destroyWindow()
   SDL_Quit();
   return EXIT_SUCCESS;
 }
+
